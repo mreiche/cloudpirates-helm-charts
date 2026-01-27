@@ -140,6 +140,25 @@ initdb:
   ## @param initdb.directory Directory where to load initScripts
   directory: "/docker-entrypoint-initdb.d/"
 
+## @section PostgreSQL setup container configuration
+setupContainer:
+  # @param setupContainer.enabled Enables creation of a setup container
+  enabled: false
+  ## @param setupContainer.scripts Dictionary of post setup scripts
+  scripts: { }
+  ## @param setupContainer.scriptsConfigMap ConfigMap with scripts run in the setup container
+  scriptsConfigMap: ""
+  ## @section Setup container image configuration (needs bash in PATH, uses PostgreSQL image by default)
+  image:
+    ## @param image.registry Setup container image registry
+    registry:
+    ## @param image.repository Setup container image repository
+    repository:
+    ## @param image.tag Setup container image tag (immutable tags are recommended)
+    tag:
+    ## @param image.imagePullPolicy Setup container image pull policy
+    imagePullPolicy: Always
+
 ## @section Service configuration
 service:
   ## @param service.type PostgreSQL service type

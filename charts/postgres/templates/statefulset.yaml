@@ -218,6 +218,48 @@ spec:
             {{- if .Values.extraVolumeMounts }}
             {{- toYaml .Values.extraVolumeMounts | nindent 12 }}
             {{- end }}
+        {{- if .Values.setupContainer.enabled }}
+        - name: setup
+          image: {{ include "postgres.setupJobImage" . }}
+          imagePullPolicy: {{ .Values.setupContainer.image.imagePullPolicy }}
+          env:
+            - name: PGHOST
+              value: "localhost"
+            - name: PGPORT
+              value: {{ .Values.service.port | quote }}
+            {{- if .Values.auth.username }}
+            - name: PGUSER
+              value: {{ include "postgres.username" .}}
+            {{- end }}
+            {{- if .Values.auth.database }}
+            - name: PGDATABASE
+              value: {{ include "postgres.database" .}}
+            {{- end }}
+            - name: PGPASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "postgres.secretName" . }}
+                  key: {{ include "postgres.adminPasswordKey" . }}
+          volumeMounts:
+            - name: setup-scripts
+              mountPath: /setup-scripts
+              readOnly: true
+          command:
+            - /usr/bin/bash
+            - -cex
+            - |
+              SCRIPT_DIR="/setup-scripts"
+              find "${SCRIPT_DIR}" -maxdepth 1 -name "*.sh" | sort | while read -r script; do
+                bash "${script}"
+              done
+
+              perform_exit() {
+                echo "Exit"
+                exit 0
+              }
+              trap perform_exit SIGINT SIGTERM
+              while true; do sleep 999999 & wait $!; done
+        {{- end }}
         {{- if .Values.metrics.enabled }}
         - name: metrics
           image: "{{ .Values.metrics.image.registry }}/{{ .Values.metrics.image.repository }}:{{ .Values.metrics.image.tag }}"
@@ -290,6 +332,11 @@ spec:
           configMap:
             name: {{ printf "%s-wrapper" (include "postgres.fullname" .) }}
             defaultMode: 0755
+        {{- end }}
+        {{- if .Values.setupContainer.enabled }}
+        - name: setup-scripts
+          configMap:
+            name: {{ ternary .Values.setupContainer.scriptsConfigMap (printf "%s-setup-scripts" (include "postgres.fullname" .)) (ne .Values.setupContainer.scriptsConfigMap "") }}
         {{- end }}
         {{- if .Values.extraVolumes }}
         {{- toYaml .Values.extraVolumes | nindent 8 }}

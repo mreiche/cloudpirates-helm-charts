@@ -1,0 +1,16 @@
+{{- $createPostScripts := and .Values.setupContainer.enabled .Values.setupContainer.scripts (not .Values.setupContainer.scriptsConfigMap) }}
+{{- if $createPostScripts }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ printf "%s-setup-scripts" (include "postgres.fullname" .) }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "postgres.labels" . | nindent 4 }}
+  {{- if .Values.commonAnnotations }}
+  annotations:
+    {{- include "postgres.annotations" . | nindent 4 }}
+  {{- end }}
+data:
+  {{- include "cloudpirates.tplvalues.render" (dict "value" .Values.setupContainer.scripts "context" .) | nindent 2 }}
+{{- end }}

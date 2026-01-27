@@ -589,6 +589,28 @@ initContainers:
 
 Hardened PostgreSQL images have strict security requirements and will not automatically fix directory permissions. When Kubernetes creates persistent volumes with `fsGroup`, it sets permissions to 2770 (including the setgid bit), which PostgreSQL's hardened images reject. The initContainer runs once before PostgreSQL starts to correct these permissions.
 
+## Setup container
+
+You can configure a list of shell scripts to configure:
+```yaml
+setupContainer:
+  enabled: true
+  scripts:
+    create_user.sh: |
+      psql -v ON_ERROR_STOP=1 <<'EOSQL'
+        DO $$
+        BEGIN
+          IF NOT EXISTS (
+            SELECT FROM pg_roles WHERE rolname = 'my-user'
+          ) THEN
+            CREATE USER "my-user" WITH PASSWORD 'secret';
+          END IF;
+        END
+        $$;
+        -- SELECT 1;
+        EOSQL
+```
+
 ## Access PostgreSQL
 
 ### Via kubectl port-forward

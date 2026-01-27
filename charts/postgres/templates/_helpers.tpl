@@ -52,6 +52,17 @@ Return the proper PostgreSQL image name
 {{- end }}
 
 {{/*
+Return the proper image name for the post setup container
+*/}}
+{{- define "postgres.setupJobImage" -}}
+  {{- if and .Values.setupContainer.image .Values.setupContainer.image.repository .Values.setupContainer.image.registry .Values.setupContainer.image.tag -}}
+    {{- include "cloudpirates.image" (dict "image" .Values.setupContainer.image "global" .Values.global) -}}
+  {{- else -}}
+    {{- include "postgres.image" . -}}
+  {{- end -}}
+{{- end }}
+
+{{/*
 Return PostgreSQL credentials secret name
 */}}
 {{- define "postgres.secretName" -}}
