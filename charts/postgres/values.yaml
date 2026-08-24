@@ -68,18 +68,14 @@ containerSecurityContext:
       - ALL
 
 autoupgrade:
-  # -- Enables the autoupgrade feature
+  # -- Enables the pgupgrade feature
   enabled: false
-  # -- Additional environment variables for pgautoupgrade
-  extraEnvVars: []
-  # -- The previous major version is required to detect the data path. This is only necessary if you upgrade from PostgreSQL < 18
-  sourceMajorVersion: 17
   image:
     registry: docker.io
-    repository: "pgautoupgrade/pgautoupgrade"
-    # -- Target version to upgrade to. Major version and flavor should match image.tag
-    tag: "18-trixie"
-    pullPolicy: Always
+    repository: "tianon/postgres-upgrade"
+    # -- Image version to upgrade from to version
+    tag: "17-to-18"
+    pullPolicy: IfNotPresent
 
 ## @section PostgreSQL Authentication
 auth:

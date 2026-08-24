@@ -74,22 +74,14 @@ spec:
           args:
             - -ce
             - |
-              #ls -lahF /var/lib/postgresql/pgdata
-
-              echo "Target: $PGTARGET"
-              echo "My ID: $(id -u)"
-              echo "postgres UID: $(id -u postgres)"
-
-              legacy_pgdata="/var/lib/postgresql/pgdata"
-              if [ -d "${legacy_pgdata}" ]; then
-                echo "Legacy data directory found. Set as PGDATA"
-                cat /var/lib/postgresql/pgdata/PG_VERSION
-                export PGDATA="${legacy_pgdata}"
+              version_file=$(find "${MOUNT_PATH}" -type f -name PG_VERSION)
+              if [ -z "${version_file}" ]; then
+                echo "Unable to find PG_VERSION file in ${MOUNT_PATH}. Aborting"
+                exit 1
               fi
 
-              #export PGTARGET_MAJOR=${PGTARGET%%.*}
-              export PGAUTO_SU="no"
-              /usr/local/bin/docker-entrypoint.sh postgres
+              export PGDATAOLD=$(dirname "${version_file}")
+              docker-upgrade pg_upgrade
           volumeMounts:
             - name: {{ .Values.persistence.volumeName }}
               mountPath: {{ include "postgres.dataDir" . }}
@@ -97,19 +89,23 @@ spec:
               subPath: {{ .Values.persistence.subPath }}
               {{- end }}
           env:
-{{/*            - name: PGDATA*/}}
+            - name: MOUNT_PATH
+              value: {{ include "postgres.dataDir" . }}/{{ .Values.persistence.subPath }}
+{{/*            - name: PGDATAOLD*/}}
 {{/*              #value: {{ include "postgres.pgdataPath" (dict "majorVersion" .Values.autoupgrade.sourceMajorVersion "context" .) }}*/}}
 {{/*              value: {{ include "postgres.pgdataPath" . }}*/}}
-            - name: POSTGRES_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: {{ include "postgres.secretName" . }}
-                  key: {{ include "postgres.adminPasswordKey" . }}
-            - name: PGAUTO_ONESHOT
-              value: "yes"
-            {{- with .Values.autoupgrade.extraEnvVars }}
-{{ toYaml . | indent 12 }}
-            {{- end }}
+            - name: PGDATANEW
+              value: {{ include "postgres.pgdataPath" . }}
+{{/*            - name: POSTGRES_PASSWORD*/}}
+{{/*              valueFrom:*/}}
+{{/*                secretKeyRef:*/}}
+{{/*                  name: {{ include "postgres.secretName" . }}*/}}
+{{/*                  key: {{ include "postgres.adminPasswordKey" . }}*/}}
+{{/*            - name: PGAUTO_ONESHOT*/}}
+{{/*              value: "yes"*/}}
+{{/*            {{- with .Values.pgupgrade.extraEnvVars }}*/}}
+{{/*{{ toYaml . | indent 12 }}*/}}
+{{/*            {{- end }}*/}}
         {{- end }}
         {{- if .Values.initContainers }}
         {{- toYaml .Values.initContainers | nindent 8 }}
