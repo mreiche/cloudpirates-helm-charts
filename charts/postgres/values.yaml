@@ -77,8 +77,8 @@ autoupgrade:
   image:
     registry: docker.io
     repository: "pgautoupgrade/pgautoupgrade"
-    # -- Target version to upgrade to. The major version should match image.tag
-    tag: "18-alpine"
+    # -- Target version to upgrade to. Major version and flavor should match image.tag
+    tag: "18-trixie"
     pullPolicy: Always
 
 ## @section PostgreSQL Authentication

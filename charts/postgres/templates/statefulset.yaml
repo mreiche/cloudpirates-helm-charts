@@ -70,6 +70,26 @@ spec:
           securityContext: {{ include "cloudpirates.renderContainerSecurityContext" . | nindent 12 }}
           image: {{ include "cloudpirates.image" (dict "image" .Values.autoupgrade.image "global" .Values.global) }}
           imagePullPolicy: {{ .Values.autoupgrade.image.pullPolicy }}
+          command: ["sh"]
+          args:
+            - -ce
+            - |
+              #ls -lahF /var/lib/postgresql/pgdata
+
+              echo "Target: $PGTARGET"
+              echo "My ID: $(id -u)"
+              echo "postgres UID: $(id -u postgres)"
+
+              legacy_pgdata="/var/lib/postgresql/pgdata"
+              if [ -d "${legacy_pgdata}" ]; then
+                echo "Legacy data directory found. Set as PGDATA"
+                cat /var/lib/postgresql/pgdata/PG_VERSION
+                export PGDATA="${legacy_pgdata}"
+              fi
+
+              #export PGTARGET_MAJOR=${PGTARGET%%.*}
+              export PGAUTO_SU="no"
+              /usr/local/bin/docker-entrypoint.sh postgres
           volumeMounts:
             - name: {{ .Values.persistence.volumeName }}
               mountPath: {{ include "postgres.dataDir" . }}
@@ -77,8 +97,9 @@ spec:
               subPath: {{ .Values.persistence.subPath }}
               {{- end }}
           env:
-            - name: PGDATA
-              value: {{ include "postgres.pgdataPath" (dict "majorVersion" .Values.autoupgrade.sourceMajorVersion "context" .) }}
+{{/*            - name: PGDATA*/}}
+{{/*              #value: {{ include "postgres.pgdataPath" (dict "majorVersion" .Values.autoupgrade.sourceMajorVersion "context" .) }}*/}}
+{{/*              value: {{ include "postgres.pgdataPath" . }}*/}}
             - name: POSTGRES_PASSWORD
               valueFrom:
                 secretKeyRef:

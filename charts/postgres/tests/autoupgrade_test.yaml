@@ -12,44 +12,47 @@ tests:
     asserts:
       - equal:
           path: spec.template.spec.initContainers[0].name
+          value: move-data
+      - equal:
+          path: spec.template.spec.initContainers[1].name
           value: pgautoupgrade
       - equal:
-          path: spec.template.spec.initContainers[0].volumeMounts[0].name
+          path: spec.template.spec.initContainers[1].volumeMounts[0].name
           value: data
       - equal:
-          path: spec.template.spec.initContainers[0].volumeMounts[0].mountPath
+          path: spec.template.spec.initContainers[1].volumeMounts[0].mountPath
           value: /var/lib/postgresql
+#      - equal:
+#          path: spec.template.spec.initContainers[1].env[0].name
+#          value: PGDATA
+#      - equal:
+#          path: spec.template.spec.initContainers[1].env[0].value
+#          value: /var/lib/postgresql/18/docker
       - equal:
-          path: spec.template.spec.initContainers[0].env[0].name
-          value: PGDATA
-      - equal:
-          path: spec.template.spec.initContainers[0].env[0].value
-          value: /var/lib/postgresql/data/pgdata
-      - equal:
-          path: spec.template.spec.initContainers[0].env[1].name
+          path: spec.template.spec.initContainers[1].env[1].name
           value: POSTGRES_PASSWORD
       - equal:
-          path: spec.template.spec.initContainers[0].env[2].name
+          path: spec.template.spec.initContainers[1].env[2].name
           value: PGAUTO_ONESHOT
       - equal:
-          path: spec.template.spec.initContainers[0].env[2].value
+          path: spec.template.spec.initContainers[1].env[2].value
           value: yes
       - equal:
-          path: spec.template.spec.initContainers[0].env[3].name
+          path: spec.template.spec.initContainers[1].env[3].name
           value: PGAUTO_REINDEX
       - equal:
-          path: spec.template.spec.initContainers[0].env[3].value
+          path: spec.template.spec.initContainers[1].env[3].value
           value: no
-  - it: Test default values
-    set:
-      autoupgrade:
-        sourceMajorVersion: 18
-      image:
-        tag: "19-alpine"
-    asserts:
-      - equal:
-          path: spec.template.spec.initContainers[0].env[0].name
-          value: PGDATA
-      - equal:
-          path: spec.template.spec.initContainers[0].env[0].value
-          value: /var/lib/postgresql/18/docker
+#  - it: Test default values
+#    set:
+#      autoupgrade:
+#        sourceMajorVersion: 18
+#      image:
+#        tag: "19-alpine"
+#    asserts:
+#      - equal:
+#          path: spec.template.spec.initContainers[0].env[0].name
+#          value: PGDATA
+#      - equal:
+#          path: spec.template.spec.initContainers[0].env[0].value
+#          value: /var/lib/postgresql/18/docker
