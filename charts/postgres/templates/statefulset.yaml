@@ -65,6 +65,31 @@ spec:
           command:
             - /replication-scripts/replication-standby-init.sh
         {{- end }}
+        {{- if .Values.autoupgrade.enabled }}
+        - name: pgautoupgrade
+          securityContext: {{ include "cloudpirates.renderContainerSecurityContext" . | nindent 12 }}
+          image: {{ include "cloudpirates.image" (dict "image" .Values.autoupgrade.image "global" .Values.global) }}
+          imagePullPolicy: {{ .Values.autoupgrade.image.pullPolicy }}
+          volumeMounts:
+            - name: {{ .Values.persistence.volumeName }}
+              mountPath: {{ include "postgres.dataDir" . }}
+              {{- if .Values.persistence.subPath }}
+              subPath: {{ .Values.persistence.subPath }}
+              {{- end }}
+          env:
+            - name: PGDATA
+              value: {{ include "postgres.pgdataPath" (dict "majorVersion" .Values.autoupgrade.sourceMajorVersion "context" .) }}
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "postgres.secretName" . }}
+                  key: {{ include "postgres.adminPasswordKey" . }}
+            - name: PGAUTO_ONESHOT
+              value: "yes"
+            {{- with .Values.autoupgrade.extraEnvVars }}
+{{ toYaml . | indent 12 }}
+            {{- end }}
+        {{- end }}
         {{- if .Values.initContainers }}
         {{- toYaml .Values.initContainers | nindent 8 }}
         {{- end }}

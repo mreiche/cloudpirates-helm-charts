@@ -208,10 +208,11 @@ For hardened images <18, use /var/lib/postgresql/<version>/data
 For standard images <18, use traditional PGDATA
 */}}
 {{- define "postgres.pgdataPath" -}}
-{{- $majorVersion := include "postgres.majorVersion" . | int -}}
+{{- $context := .context | default . }}
+{{- $majorVersion := .majorVersion | default (include "postgres.majorVersion" $context) | int -}}
 {{- if ge $majorVersion 18 -}}
 {{- printf "/var/lib/postgresql/%d/docker" $majorVersion -}}
-{{- else if .Values.image.useHardenedImage -}}
+{{- else if $context.Values.image.useHardenedImage -}}
 {{- printf "/var/lib/postgresql/%d/data" $majorVersion -}}
 {{- else -}}
 {{- printf "/var/lib/postgresql/data/pgdata" -}}
