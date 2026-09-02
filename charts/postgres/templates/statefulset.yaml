@@ -70,18 +70,31 @@ spec:
           securityContext: {{ include "cloudpirates.renderContainerSecurityContext" . | nindent 12 }}
           image: {{ include "cloudpirates.image" (dict "image" .Values.autoupgrade.image "global" .Values.global) }}
           imagePullPolicy: {{ .Values.autoupgrade.image.pullPolicy }}
-          command: ["sh"]
+          command: ["bash"]
           args:
             - -ce
             - |
-              version_file=$(find "${MOUNT_PATH}" -type f -name PG_VERSION)
+              find "${MOUNT_PATH}" -type f -name PG_VERSION
+              find "${MOUNT_PATH}" -type f -name PG_VERSION | sort | tail -n 1
+              #find "${MOUNT_PATH}" -type f -name PG_VERSION | sort | head -n 1
+              #find "${MOUNT_PATH}" -type f -name PG_VERSION | sort -n | head -n 1
+              version_file=$(find "${MOUNT_PATH}" -type f -name PG_VERSION | sort | tail -n 1)
               if [ -z "${version_file}" ]; then
-                echo "Unable to find PG_VERSION file in ${MOUNT_PATH}. Aborting"
+                echo "Unable to find PG_VERSION file in ${MOUNT_PATH}. Aborting."
                 exit 1
               fi
 
               export PGDATAOLD=$(dirname "${version_file}")
-              docker-upgrade pg_upgrade
+
+              if [[ "${PGDATAOLD}" == "${PGDATANEW}" ]]; then
+                echo "Data directories PGDATAOLD and PGDATANEW are identical. Skip migration."
+              else
+                echo "Migrate from ${PGDATAOLD} to ${PGDATANEW}"
+                #pg_checksums --enable -D "${PGDATAOLD}"
+                echo "Delete ${PGDATANEW}"
+                rm -rf "${PGDATANEW}"
+                pg_upgrade
+              fi
           volumeMounts:
             - name: {{ .Values.persistence.volumeName }}
               mountPath: {{ include "postgres.dataDir" . }}
